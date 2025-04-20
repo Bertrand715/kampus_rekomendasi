@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Skor - Rekomendasi Kampus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="{{ url_for('home') }}" class="nav-logo">Kampus Terbaik</a>
+        <nav class="nav">
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-list">
+                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('how_to_use') }}" class="nav-link">How To Use</a></li>
+                <li><a href="{{ url_for('calculator') }}" class="nav-link active">Calculator</a></li>
+                <li><a href="{{ url_for('history') }}" class="nav-link">History</a></li>
+                <li><a href="{{ url_for('about') }}" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('index') }}" class="nav-link search-link"><i class="fas fa-search"></i> Search</a></li>
+                <li><button class="theme-toggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Floating Search Button -->
+    <a href="{{ url_for('index') }}" class="floating-button"><i class="fas fa-search"></i></a>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Kalkulator Skor Universitas</h1>
+        <section class="calculator">
+            <form id="calculator-form">
+                <label for="akreditasi">Akreditasi: <span class="tooltip">A (5), B (4), C (3), D (2), E (1)</span></label>
+                <select id="akreditasi" name="akreditasi" required>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                </select>
+
+                <label for="biaya">Biaya (1-5): <span class="tooltip">1 = sangat murah, 5 = sangat mahal</span></label>
+                <input type="number" id="biaya" name="biaya" min="1" max="5" required>
+
+                <label for="fasilitas">Fasilitas (1-5): <span class="tooltip">1 = minim, 5 = sangat lengkap</span></label>
+                <input type="number" id="fasilitas" name="fasilitas" min="1" max="5" required>
+
+                <label for="lokasi">Lokasi: <span class="tooltip">Pusat Kota (5), Kecamatan (4), Pedesaan (3)</span></label>
+                <select id="lokasi" name="lokasi" required>
+                    <option value="Pusat Kota">Pusat Kota</option>
+                    <option value="Kecamatan">Kecamatan</option>
+                    <option value="Pedesaan">Pedesaan</option>
+                </select>
+
+                <label for="jarak">Jarak (1-5): <span class="tooltip">1 = sangat dekat, 5 = sangat jauh</span></label>
+                <input type="number" id="jarak" name="jarak" min="1" max="5" required>
+
+                <button type="submit">Hitung Skor</button>
+            </form>
+            <div id="calculator-result" style="display: none;">
+                <h2>Hasil Perhitungan</h2>
+                <p>Skor Total: <span id="total-score"></span></p>
+                <p>Detail Perhitungan:</p>
+                <ul id="calculation-details"></ul>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Toggle mobile menu
+            $('.nav-toggle').on('click', function() {
+                $('.nav-list').toggleClass('active');
+            });
+
+            // Dark mode toggle
+            $('.theme-toggle').on('click', function() {
+                $('body').toggleClass('dark-mode');
+                const icon = $('.theme-toggle i');
+                icon.toggleClass('fa-moon fa-sun');
+                localStorage.setItem('theme', $('body').hasClass('dark-mode') ? 'dark' : 'light');
+            });
+
+            // Load theme from localStorage
+            if (localStorage.getItem('theme') === 'dark') {
+                $('body').addClass('dark-mode');
+                $('.theme-toggle i').removeClass('fa-moon').addClass('fa-sun');
+            }
+
+            // Calculator logic
+            $('#calculator-form').on('submit', function(e) {
+                e.preventDefault();
+                const akreditasi = $('#akreditasi').val();
+                const biaya = parseInt($('#biaya').val());
+                const fasilitas = parseInt($('#fasilitas').val());
+                const lokasi = $('#lokasi').val();
+                const jarak = parseInt($('#jarak').val());
+
+                if (biaya < 1 || biaya > 5 || fasilitas < 1 || fasilitas > 5 || jarak < 1 || jarak > 5) {
+                    alert('Biaya, Fasilitas, dan Jarak harus bernilai antara 1 dan 5.');
+                    return;
+                }
+
+                const bobot_akreditasi = 0.3;
+                const bobot_biaya = 0.25;
+                const bobot_fasilitas = 0.2;
+                const bobot_lokasi = 0.15;
+                const bobot_jarak = 0.1;
+
+                const skor_akreditasi = { 'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1 }[akreditasi];
+                const skor_biaya = 5 - biaya;
+                const skor_fasilitas = fasilitas;
+                const skor_lokasi = { 'Pusat Kota': 5, 'Kecamatan': 4, 'Pedesaan': 3 }[lokasi];
+                const skor_jarak = 5 - jarak;
+
+                const total_skor = (
+                    skor_akreditasi * bobot_akreditasi +
+                    skor_biaya * bobot_biaya +
+                    skor_fasilitas * bobot_fasilitas +
+                    skor_lokasi * bobot_lokasi +
+                    skor_jarak * bobot_jarak
+                );
+
+                $('#total-score').text(total_skor.toFixed(2));
+                $('#calculation-details').html(`
+                    <li>Akreditasi: ${akreditasi} (Skor: ${skor_akreditasi}, Kontribusi: ${(skor_akreditasi * bobot_akreditasi).toFixed(2)})</li>
+                    <li>Biaya: ${biaya} (Skor: ${skor_biaya}, Kontribusi: ${(skor_biaya * bobot_biaya).toFixed(2)})</li>
+                    <li>Fasilitas: ${fasilitas} (Skor: ${skor_fasilitas}, Kontribusi: ${(skor_fasilitas * bobot_fasilitas).toFixed(2)})</li>
+                    <li>Lokasi: ${lokasi} (Skor: ${skor_lokasi}, Kontribusi: ${(skor_lokasi * bobot_lokasi).toFixed(2)})</li>
+                    <li>Jarak: ${jarak} (Skor: ${skor_jarak}, Kontribusi: ${(skor_jarak * bobot_jarak).toFixed(2)})</li>
+                `);
+                $('#calculator-result').show();
+            });
+
+            // Hide loading animation on page load
+            $(window).on('load', function() {
+                setTimeout(() => {
+                    $('.loading-overlay').hide();
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>

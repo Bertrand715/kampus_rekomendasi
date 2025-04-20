@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Pemilihan Kampus Terbaik</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="{{ url_for('home') }}" class="nav-logo">Kampus Terbaik</a>
+        <nav class="nav">
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-list">
+                <li><a href="{{ url_for('home') }}" class="nav-link active">Home</a></li>
+                <li><a href="{{ url_for('how_to_use') }}" class="nav-link">How To Use</a></li>
+                <li><a href="{{ url_for('calculator') }}" class="nav-link">Calculator</a></li>
+                <li><a href="{{ url_for('history') }}" class="nav-link">History</a></li>
+                <li><a href="{{ url_for('about') }}" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('index') }}" class="nav-link search-link"><i class="fas fa-search"></i> Search</a></li>
+                <li><button class="theme-toggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Floating Search Button -->
+    <a href="{{ url_for('index') }}" class="floating-button"><i class="fas fa-search"></i></a>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Selamat Datang di Pemilihan Kampus Terbaik</h1>
+        <div class="content-container">
+            <h2>Tentang Kami</h2>
+            <p>
+                "Pemilihan Kampus Terbaik" adalah platform yang dirancang untuk membantu calon mahasiswa menemukan universitas terbaik sesuai dengan preferensi mereka. Kami menyediakan alat pencarian dan rekomendasi yang mempertimbangkan berbagai faktor penting seperti akreditasi, biaya kuliah, fasilitas kampus, lokasi, dan jarak dari tempat tinggal Anda.
+            </p>
+            <p>
+                Dengan menggunakan sistem penilaian berbasis bobot, website ini menghitung skor untuk setiap universitas berdasarkan input pengguna, memberikan rekomendasi yang objektif dan personal. Tujuan kami adalah mempermudah proses pengambilan keputusan dalam memilih kampus yang paling sesuai dengan kebutuhan dan harapan Anda.
+            </p>
+            <p>
+                Mulai sekarang, jelajahi fitur kami untuk menemukan kampus impian Anda! Gunakan menu <a href="{{ url_for('index') }}">Search</a> untuk memulai pencarian, atau coba <a href="{{ url_for('calculator') }}">Calculator</a> untuk menghitung skor perkiraan.
+            </p>
+            <a href="{{ url_for('index') }}" class="action-button">Mulai Pencarian</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Toggle mobile menu
+        document.querySelector('.nav-toggle').addEventListener('click', () => {
+            document.querySelector('.nav-list').classList.toggle('active');
+        });
+
+        // Dark mode toggle
+        document.querySelector('.theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.querySelector('.theme-toggle i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+
+        // Load theme from localStorage
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
+        }
+
+        // Show loading animation
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.querySelector('.loading-overlay').style.display = 'none';
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History - Pemilihan Kampus Terbaik</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="{{ url_for('home') }}" class="nav-logo">Kampus Terbaik</a>
+        <nav class="nav">
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-list">
+                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('how_to_use') }}" class="nav-link">How To Use</a></li>
+                <li><a href="{{ url_for('calculator') }}" class="nav-link">Calculator</a></li>
+                <li><a href="{{ url_for('history') }}" class="nav-link active">History</a></li>
+                <li><a href="{{ url_for('about') }}" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('index') }}" class="nav-link search-link"><i class="fas fa-search"></i> Search</a></li>
+                <li><button class="theme-toggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Floating Search Button -->
+    <a href="{{ url_for('index') }}" class="floating-button"><i class="fas fa-search"></i></a>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Riwayat Pencarian</h1>
+        <div class="content-container">
+            {% if error %}
+            <div class="error-message">
+                <p>{{ error }}</p>
+            </div>
+            {% else %}
+            <div class="history-list vertical"> <!-- Default ke vertical -->
+                {% if history %}
+                {% for item in history %}
+                <div class="history-item">
+                    <h4>{{ item.nama }}</h4>
+                    <p><strong>Skor:</strong> {{ item.skor }}/5.00</p>
+                    <p><strong>Waktu Pencarian:</strong> {{ item.search_time.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <ul>
+                        <li><strong>Lokasi:</strong> {{ item.lokasi }}</li>
+                        <li><strong>Akreditasi:</strong> {{ item.akreditasi }}</li>
+                        <li><strong>Biaya:</strong> {{ item.biaya }}</li>
+                        <li><strong>Fasilitas:</strong> {{ item.fasilitas }}</li>
+                        <li><strong>Jarak:</strong> {{ item.jarak }}</li>
+                    </ul>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p>Tidak ada riwayat pencarian.</p>
+                {% endif %}
+            </div>
+            {% if total_pages > 1 %}
+            <div class="pagination">
+                <span>Page</span>
+                {% if current_page > 1 %}
+                <a href="{{ url_for('history', page=current_page-1) }}" class="page-link"><</a>
+                {% endif %}
+                <span class="current-page">{{ current_page }}</span>
+                {% if current_page < total_pages %}
+                <a href="{{ url_for('history', page=current_page+1) }}" class="page-link">></a>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Toggle mobile menu
+        document.querySelector('.nav-toggle').addEventListener('click', () => {
+            document.querySelector('.nav-list').classList.toggle('active');
+        });
+
+        // Dark mode toggle
+        document.querySelector('.theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.querySelector('.theme-toggle i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+
+        // Load theme from localStorage
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
+        }
+
+        // Show loading animation
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.querySelector('.loading-overlay').style.display = 'none';
+            }, 500);
+        });
+    </script>
+</body>
+</html>

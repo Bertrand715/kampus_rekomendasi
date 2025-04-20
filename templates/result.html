@@ -4,110 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hasil Rekomendasi</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="result-container">
-        <h1>Hasil Rekomendasi Kampus</h1>
-        
-        <div class="result-header">
-            <h2>{{ result.nama }}</h2>
-            <div class="score">Skor: {{ result.skor }}/5.00</div>
-        </div>
-        
-        <div class="result-details">
-            <h3>Detail Penilaian:</h3>
-            <ul>
-                <li><strong>Lokasi:</strong> {{ result.detail.Lokasi }}</li>
-                <li><strong>Akreditasi:</strong> {{ result.detail.Akreditasi }}</li>
-                <li><strong>Biaya:</strong> {{ result.detail.Biaya }}</li>
-                <li><strong>Fasilitas:</strong> {{ result.detail.Fasilitas }}</li>
-                <li><strong>Jarak:</strong> {{ result.detail.Jarak }}</li>
+    <!-- Header -->
+    <header class="header">
+        <a href="{{ url_for('home') }}" class="nav-logo">Kampus Terbaik</a>
+        <nav class="nav">
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-list">
+                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('how_to_use') }}" class="nav-link">How To Use</a></li>
+                <li><a href="{{ url_for('calculator') }}" class="nav-link">Calculator</a></li>
+                <li><a href="{{ url_for('history') }}" class="nav-link">History</a></li>
+                <li><a href="{{ url_for('about') }}" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('index') }}" class="nav-link search-link"><i class="fas fa-search"></i> Search</a></li>
+                <li><button class="theme-toggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button></li>
             </ul>
-        </div>
+        </nav>
+    </header>
 
-        <!-- Detail Perhitungan Skor -->
-        <div class="calculation-details">
-            <h3>Detail Perhitungan Skor</h3>
-            <table class="calculation-table">
-                <thead>
-                    <tr>
-                        <th>Faktor</th>
-                        <th>Nilai Input</th>
-                        <th>Skor</th>
-                        <th>Bobot</th>
-                        <th>Kontribusi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Akreditasi</td>
-                        <td>{{ result.detail_perhitungan.akreditasi.nilai }}</td>
-                        <td>{{ result.detail_perhitungan.akreditasi.skor }}</td>
-                        <td>{{ result.detail_perhitungan.akreditasi.bobot }}</td>
-                        <td>{{ result.detail_perhitungan.akreditasi.kontribusi }}</td>
-                    </tr>
-                    <tr>
-                        <td>Biaya</td>
-                        <td>{{ result.detail_perhitungan.biaya.nilai }}</td>
-                        <td>{{ result.detail_perhitungan.biaya.skor }}</td>
-                        <td>{{ result.detail_perhitungan.biaya.bobot }}</td>
-                        <td>{{ result.detail_perhitungan.biaya.kontribusi }}</td>
-                    </tr>
-                    <tr>
-                        <td>Fasilitas</td>
-                        <td>{{ result.detail_perhitungan.fasilitas.nilai }}</td>
-                        <td>{{ result.detail_perhitungan.fasilitas.skor }}</td>
-                        <td>{{ result.detail_perhitungan.fasilitas.bobot }}</td>
-                        <td>{{ result.detail_perhitungan.fasilitas.kontribusi }}</td>
-                    </tr>
-                    <tr>
-                        <td>Lokasi</td>
-                        <td>{{ result.detail_perhitungan.lokasi.nilai }}</td>
-                        <td>{{ result.detail_perhitungan.lokasi.skor }}</td>
-                        <td>{{ result.detail_perhitungan.lokasi.bobot }}</td>
-                        <td>{{ result.detail_perhitungan.lokasi.kontribusi }}</td>
-                    </tr>
-                    <tr>
-                        <td>Jarak</td>
-                        <td>{{ result.detail_perhitungan.jarak.nilai }}</td>
-                        <td>{{ result.detail_perhitungan.jarak.skor }}</td>
-                        <td>{{ result.detail_perhitungan.jarak.bobot }}</td>
-                        <td>{{ result.detail_perhitungan.jarak.kontribusi }}</td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="4"><strong>Total Skor</strong></td>
-                        <td><strong>{{ result.skor }}</strong></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+    <!-- Floating Search Button -->
+    <a href="{{ url_for('index') }}" class="floating-button"><i class="fas fa-search"></i></a>
 
-        <!-- History Section -->
-        {% if history %}
-        <div class="history-container">
-            <h3>Riwayat Pencarian Terbaru</h3>
-            <div class="history-list">
-                {% for item in history %}
-                <div class="history-item">
-                    <h4>{{ item.nama }}</h4>
-                    <p><strong>Skor:</strong> {{ item.skor }}/5.00</p>
-                    <ul>
-                        <li><strong>Lokasi:</strong> {{ item.lokasi }}</li>
-                        <li><strong>Akreditasi:</strong> {{ item.akreditasi }}</li>
-                        <li><strong>Biaya:</strong> {{ item.biaya }}</li>
-                        <li><strong>Fasilitas:</strong> {{ item.fasilitas }}</li>
-                        <li><strong>Jarak:</strong> {{ item.jarak }}</li>
-                    </ul>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        
-        <a href="{{ url_for('index') }}" class="back-button">Kembali ke Pencarian</a>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="spinner"></div>
     </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="result-container">
+            <h1>Hasil Rekomendasi Kampus</h1>
+            
+            <div class="result-header">
+                <h2>{{ result.nama }}</h2>
+                <div class="score">Skor: {{ result.skor }}/5.00</div>
+            </div>
+            
+            <div class="result-details">
+                <h3>Detail Penilaian:</h3>
+                <ul>
+                    <li><strong>Lokasi:</strong> {{ result.detail.Lokasi }}</li>
+                    <li><strong>Akreditasi:</strong> {{ result.detail.Akreditasi }}</li>
+                    <li><strong>Biaya:</strong> {{ result.detail.Biaya }}</li>
+                    <li><strong>Fasilitas:</strong> {{ result.detail.Fasilitas }}</li>
+                    <li><strong>Jarak:</strong> {{ result.detail.Jarak }}</li>
+                </ul>
+            </div>
+
+            <!-- Detail Perhitungan Skor -->
+            <div class="calculation-details">
+                <h3>Detail Perhitungan Skor</h3>
+                <table class="calculation-table">
+                    <thead>
+                        <tr>
+                            <th>Faktor</th>
+                            <th>Nilai Input</th>
+                            <th>Skor</th>
+                            <th>Bobot</th>
+                            <th>Kontribusi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Akreditasi</td>
+                            <td>{{ result.detail_perhitungan.akreditasi.nilai }}</td>
+                            <td>{{ result.detail_perhitungan.akreditasi.skor }}</td>
+                            <td>{{ result.detail_perhitungan.akreditasi.bobot }}</td>
+                            <td>{{ result.detail_perhitungan.akreditasi.kontribusi }}</td>
+                        </tr>
+                        <tr>
+                            <td>Biaya</td>
+                            <td>{{ result.detail_perhitungan.biaya.nilai }}</td>
+                            <td>{{ result.detail_perhitungan.biaya.skor }}</td>
+                            <td>{{ result.detail_perhitungan.biaya.bobot }}</td>
+                            <td>{{ result.detail_perhitungan.biaya.kontribusi }}</td>
+                        </tr>
+                        <tr>
+                            <td>Fasilitas</td>
+                            <td>{{ result.detail_perhitungan.fasilitas.nilai }}</td>
+                            <td>{{ result.detail_perhitungan.fasilitas.skor }}</td>
+                            <td>{{ result.detail_perhitungan.fasilitas.bobot }}</td>
+                            <td>{{ result.detail_perhitungan.fasilitas.kontribusi }}</td>
+                        </tr>
+                        <tr>
+                            <td>Lokasi</td>
+                            <td>{{ result.detail_perhitungan.lokasi.nilai }}</td>
+                            <td>{{ result.detail_perhitungan.lokasi.skor }}</td>
+                            <td>{{ result.detail_perhitungan.lokasi.bobot }}</td>
+                            <td>{{ result.detail_perhitungan.lokasi.kontribusi }}</td>
+                        </tr>
+                        <tr>
+                            <td>Jarak</td>
+                            <td>{{ result.detail_perhitungan.jarak.nilai }}</td>
+                            <td>{{ result.detail_perhitungan.jarak.skor }}</td>
+                            <td>{{ result.detail_perhitungan.jarak.bobot }}</td>
+                            <td>{{ result.detail_perhitungan.jarak.kontribusi }}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4"><strong>Total Skor</strong></td>
+                            <td><strong>{{ result.skor }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <a href="{{ url_for('index') }}" class="back-button">Kembali ke Pencarian</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Toggle mobile menu
+        document.querySelector('.nav-toggle').addEventListener('click', () => {
+            document.querySelector('.nav-list').classList.toggle('active');
+        });
+
+        // Dark mode toggle
+        document.querySelector('.theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.querySelector('.theme-toggle i');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+        });
+
+        // Load theme from localStorage
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
+        }
+
+        // Show loading animation
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.querySelector('.loading-overlay').style.display = 'none';
+            }, 500);
+        });
+    </script>
 </body>
 </html>

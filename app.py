@@ -1,293 +1,266 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import mysql.connector
 import pandas as pd
-import os
+from datetime import datetime
+import mysql.connector.errors
+import difflib
+import logging
 
 app = Flask(__name__)
 
-# Configure MySQL connection
-# Untuk produksi, gunakan variabel lingkungan:
-# MYSQL_CONFIG = {
-#     'host': os.getenv('MYSQL_HOST', 'localhost'),
-#     'user': os.getenv('MYSQL_USER', 'root'),
-#     'password': os.getenv('MYSQL_PASSWORD', 'mypassword'),
-#     'database': os.getenv('MYSQL_DB', 'universitas_db')
-# }
-MYSQL_CONFIG = {
-    'host': 'lulablly.mysql.pythonanywhere-services.com',
-    'user': 'lulablly',
-    'password': 'AyokMakan123',  # Ganti dengan kata sandi MySQL kamu
-    'database': 'lulablly$username-universitas_db'
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Database configuration
+db_config = {
+    'host': 'localhost',
+    'user': 'root',  # Ganti dengan nama pengguna MySQL Anda
+    'password': '',  # Ganti dengan kata sandi MySQL Anda
+    'database': 'universitas_db'  # Nama database yang valid
 }
+
+def create_database():
+    try:
+        temp_config = db_config.copy()
+        temp_config.pop('database')
+        conn = mysql.connector.connect(**temp_config)
+        cursor = conn.cursor()
+        
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_config['database']}")
+        app.logger.debug(f"Database '{db_config['database']}' created or already exists.")
+        
+        cursor.close()
+        conn.close()
+    except mysql.connector.Error as err:
+        app.logger.error(f"Error creating database: {err}")
+        raise
+    except Exception as e:
+        app.logger.error(f"Unexpected error creating database: {e}")
+        raise
 
 def get_db_connection():
     try:
-        conn = mysql.connector.connect(**MYSQL_CONFIG)
-        return conn
+        return mysql.connector.connect(**db_config)
     except mysql.connector.Error as err:
-        print(f"Error koneksi ke MySQL: {err}")
-        return None
+        app.logger.error(f"Error connecting to database: {err}")
+        raise
 
-def init_db():
-    conn = get_db_connection()
-    if conn is None:
-        return
+def populate_universities():
     try:
+        conn = get_db_connection()
         cursor = conn.cursor()
-        # Create universities table
+        
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS universities (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                univ_name VARCHAR(255) NOT NULL,
-                lokasi VARCHAR(50),
-                akreditasi CHAR(1),
-                biaya INT,
-                fasilitas INT,
-                jarak INT
+                univ_name VARCHAR(255) NOT NULL
             )
         ''')
-        # Create search history table
+        
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS search_history (
+            CREATE TABLE IF NOT EXISTS history (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                univ_name VARCHAR(255),
+                sekolah_id INT,
+                nama VARCHAR(255),
                 lokasi VARCHAR(50),
                 akreditasi CHAR(1),
                 biaya INT,
                 fasilitas INT,
                 jarak INT,
                 skor FLOAT,
-                search_time DATETIME DEFAULT CURRENT_TIMESTAMP
+                search_time DATETIME,
+                FOREIGN KEY (sekolah_id) REFERENCES universities(id)
             )
         ''')
-        # Add index for faster search
-        cursor.execute('''
-            CREATE INDEX IF NOT EXISTS idx_univ_name ON universities(univ_name)
-        ''')
-        conn.commit()
-        print("Database berhasil diinisialisasi.")
-    except mysql.connector.Error as err:
-        print(f"Error saat membuat tabel: {err}")
-    finally:
-        cursor.close()
-        conn.close()
-
-def populate_universities():
-    conn = get_db_connection()
-    if conn is None:
-        return
-    try:
-        cursor = conn.cursor()
+        
         cursor.execute('SELECT COUNT(*) FROM universities')
         count = cursor.fetchone()[0]
+        
         if count == 0:
-            csv_path = os.path.join(os.path.dirname(__file__), 'data', 'univ_indonesia.csv')
             try:
-                df = pd.read_csv(csv_path)
-                if 'univ_name' not in df.columns:
-                    raise KeyError("Kolom 'univ_name' tidak ditemukan di CSV")
-                for _, row in df.iterrows():
-                    cursor.execute('''
-                        INSERT INTO universities (univ_name, lokasi, akreditasi, biaya, fasilitas, jarak)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    ''', (
-                        row['univ_name'],
-                        'Pusat Kota',
-                        'A',
-                        3,
-                        3,
-                        3
-                    ))
+                df = pd.read_csv('data/univ_indonesia.csv', usecols=['univ_name'], 
+                               skipinitialspace=True, on_bad_lines='warn', encoding='utf-8')
+                df = df.dropna(subset=['univ_name'])
+                df['univ_name'] = df['univ_name'].str.strip()
+                df = df.drop_duplicates(subset=['univ_name'])
+                
+                for univ_name in df['univ_name']:
+                    if univ_name:
+                        cursor.execute('INSERT INTO universities (univ_name) VALUES (%s)', (univ_name,))
                 conn.commit()
-                print("Data universitas berhasil dimuat ke database.")
+                app.logger.debug(f"Successfully populated universities table with {len(df)} entries.")
             except FileNotFoundError:
-                print(f"File tidak ditemukan: {csv_path}")
-            except KeyError as e:
-                print(f"Error: {e}")
+                app.logger.error("Error: 'univ_indonesia.csv' not found in 'data' directory.")
+            except pd.errors.ParserError as e:
+                app.logger.error(f"Error parsing CSV: {e}")
             except Exception as e:
-                print(f"Terjadi kesalahan saat memuat data: {e}")
-    except mysql.connector.Error as err:
-        print(f"Error saat memeriksa tabel universities: {err}")
-    finally:
+                app.logger.error(f"Error populating universities: {e}")
+        
         cursor.close()
         conn.close()
-
-def baca_dataset_sekolah():
-    conn = get_db_connection()
-    if conn is None:
-        return pd.DataFrame()
-    try:
-        df = pd.read_sql("SELECT * FROM universities", conn)
-        return df
     except mysql.connector.Error as err:
-        print(f"Error saat membaca data: {err}")
-        return pd.DataFrame()
-    finally:
-        conn.close()
-
-class Sekolah:
-    def __init__(self, nama, lokasi, akreditasi, biaya, fasilitas, jarak):
-        self.nama = nama
-        self.lokasi = lokasi
-        self.akreditasi = akreditasi
-        self.biaya = biaya
-        self.fasilitas = fasilitas
-        self.jarak = jarak
-
-    def hitung_skor(self):
-        bobot_akreditasi = 0.3
-        bobot_biaya = 0.25
-        bobot_fasilitas = 0.2
-        bobot_lokasi = 0.15
-        bobot_jarak = 0.1
-
-        # Hitung skor individu
-        skor_akreditasi = {'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1}.get(self.akreditasi, 0)
-        skor_biaya = 5 - self.biaya
-        skor_fasilitas = self.fasilitas
-        skor_lokasi = {'Pusat Kota': 5, 'Kecamatan': 4, 'Pedesaan': 3}.get(self.lokasi, 0)
-        skor_jarak = 5 - self.jarak
-
-        # Hitung total skor
-        total_skor = (skor_akreditasi * bobot_akreditasi +
-                      skor_biaya * bobot_biaya +
-                      skor_fasilitas * bobot_fasilitas +
-                      skor_lokasi * bobot_lokasi +
-                      skor_jarak * bobot_jarak)
-
-        # Simpan detail perhitungan
-        detail_perhitungan = {
-            'akreditasi': {
-                'nilai': self.akreditasi,
-                'skor': skor_akreditasi,
-                'bobot': bobot_akreditasi,
-                'kontribusi': round(skor_akreditasi * bobot_akreditasi, 2)
-            },
-            'biaya': {
-                'nilai': self.biaya,
-                'skor': skor_biaya,
-                'bobot': bobot_biaya,
-                'kontribusi': round(skor_biaya * bobot_biaya, 2)
-            },
-            'fasilitas': {
-                'nilai': self.fasilitas,
-                'skor': skor_fasilitas,
-                'bobot': bobot_fasilitas,
-                'kontribusi': round(skor_fasilitas * bobot_fasilitas, 2)
-            },
-            'lokasi': {
-                'nilai': self.lokasi,
-                'skor': skor_lokasi,
-                'bobot': bobot_lokasi,
-                'kontribusi': round(skor_lokasi * bobot_lokasi, 2)
-            },
-            'jarak': {
-                'nilai': self.jarak,
-                'skor': skor_jarak,
-                'bobot': bobot_jarak,
-                'kontribusi': round(skor_jarak * bobot_jarak, 2)
-            }
-        }
-
-        return round(total_skor, 2), detail_perhitungan
+        app.logger.error(f"Database error in populate_universities: {err}")
+    except Exception as e:
+        app.logger.error(f"Unexpected error in populate_universities: {e}")
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def home():
+    app.logger.debug("Rendering home page")
+    return render_template('home.html')
 
-@app.route('/cari-sekolah', methods=['GET'])
-def cari_sekolah():
-    query = request.args.get('q', '').lower()
-    conn = get_db_connection()
-    if conn is None:
-        return jsonify({'error': 'Gagal terhubung ke database.'}), 500
+@app.route('/how-to-use')
+def how_to_use():
+    app.logger.debug("Rendering how_to_use page")
+    return render_template('how_to_use.html')
+
+@app.route('/calculator')
+def calculator():
+    app.logger.debug("Rendering calculator page")
+    return render_template('calculator.html')
+
+@app.route('/history')
+def history():
+    app.logger.debug("Rendering history page")
+    page = request.args.get('page', 1, type=int)
+    items_per_page = 5
+    
     try:
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT id, univ_name FROM universities
-            WHERE LOWER(univ_name) LIKE %s
-        ''', (f'%{query}%',))
-        results = cursor.fetchall()
-
-        formatted_results = [{
-            'id': row[0],
-            'text': row[1]
-        } for row in results]
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
         
-        return jsonify(formatted_results)
-    except mysql.connector.Error as err:
-        print(f"Error saat mencari universitas: {err}")
-        return jsonify({'error': f'Error database: {err}'}), 500
-    finally:
+        cursor.execute('SELECT COUNT(*) AS total FROM history')
+        total_items = cursor.fetchone()['total']
+        total_pages = (total_items + items_per_page - 1) // items_per_page
+        
+        offset = (page - 1) * items_per_page
+        cursor.execute('''
+            SELECT * FROM history 
+            ORDER BY search_time DESC 
+            LIMIT %s OFFSET %s
+        ''', (items_per_page, offset))
+        history = cursor.fetchall()
+        
         cursor.close()
         conn.close()
+        
+        return render_template('history.html', 
+                             history=history, 
+                             current_page=page, 
+                             total_pages=total_pages)
+    except mysql.connector.Error as err:
+        app.logger.error(f"Database error in history: {err}")
+        return render_template('history.html', error=f"Database error: {err}")
+    except Exception as e:
+        app.logger.error(f"Unexpected error in history: {e}")
+        return render_template('history.html', error=f"Unexpected error: {e}")
+@app.route('/about')
+def about():
+    app.logger.debug("Rendering about page")
+    return render_template('about.html')
+
+@app.route('/search')
+def index():
+    app.logger.debug("Rendering search page")
+    return render_template('index.html')
+
+@app.route('/cari-sekolah')
+def cari_sekolah():
+    query = request.args.get('q', '')
+    if len(query) < 2:
+        return jsonify([])
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id, univ_name FROM universities WHERE univ_name LIKE %s LIMIT 20', ('%' + query + '%',))
+        results = [{'id': row[0], 'text': row[1]} for row in cursor.fetchall()]
+        
+        filtered_results = []
+        seen_names = set()
+        for result in results:
+            name = result['text'].lower()
+            is_similar = any(difflib.SequenceMatcher(None, name, seen).ratio() > 0.9 for seen in seen_names)
+            if not is_similar:
+                filtered_results.append(result)
+                seen_names.add(name)
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify(filtered_results[:10])
+    except mysql.connector.Error as err:
+        app.logger.error(f"Database error in cari_sekolah: {err}")
+        return jsonify({'error': f"Database error: {err}"})
+    except Exception as e:
+        app.logger.error(f"Unexpected error in cari_sekolah: {e}")
+        return jsonify({'error': f"Unexpected error: {e}"})
 
 @app.route('/rekomendasi', methods=['POST'])
 def rekomendasi():
-    # Get form data
-    nama = request.form['nama']
-    lokasi = request.form['lokasi']
-    akreditasi = request.form['akreditasi']
+    app.logger.debug("Processing rekomendasi request")
+    nama = request.form.get('nama')
+    sekolah_id = request.form.get('sekolah_id')
+    lokasi = request.form.get('lokasi')
+    akreditasi = request.form.get('akreditasi')
+    biaya = int(request.form.get('biaya'))
+    fasilitas = int(request.form.get('fasilitas'))
+    jarak = int(request.form.get('jarak'))
+    
+    if not all([nama, sekolah_id, lokasi, akreditasi]) or \
+       biaya < 1 or biaya > 5 or fasilitas < 1 or fasilitas > 5 or jarak < 1 or jarak > 5:
+        app.logger.warning("Invalid input in rekomendasi")
+        return render_template('index.html', error='Input tidak valid. Pastikan semua field terisi dan nilai antara 1-5.')
+    
+    bobot_akreditasi = 0.3
+    bobot_biaya = 0.25
+    bobot_fasilitas = 0.2
+    bobot_lokasi = 0.15
+    bobot_jarak = 0.1
+    
+    skor_akreditasi = {'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1}.get(akreditasi, 0)
+    skor_biaya = 5 - biaya
+    skor_fasilitas = fasilitas
+    skor_lokasi = {'Pusat Kota': 5, 'Kecamatan': 4, 'Pedesaan': 3}.get(lokasi, 0)
+    skor_jarak = 5 - jarak
+    
+    total_skor = (skor_akreditasi * bobot_akreditasi +
+                  skor_biaya * bobot_biaya +
+                  skor_fasilitas * bobot_fasilitas +
+                  skor_lokasi * bobot_lokasi +
+                  skor_jarak * bobot_jarak)
+    
+    detail_perhitungan = {
+        'akreditasi': {'nilai': akreditasi, 'skor': skor_akreditasi, 'bobot': '30%', 'kontribusi': round(skor_akreditasi * bobot_akreditasi, 2)},
+        'biaya': {'nilai': biaya, 'skor': skor_biaya, 'bobot': '25%', 'kontribusi': round(skor_biaya * bobot_biaya, 2)},
+        'fasilitas': {'nilai': fasilitas, 'skor': skor_fasilitas, 'bobot': '20%', 'kontribusi': round(skor_fasilitas * bobot_fasilitas, 2)},
+        'lokasi': {'nilai': lokasi, 'skor': skor_lokasi, 'bobot': '15%', 'kontribusi': round(skor_lokasi * bobot_lokasi, 2)},
+        'jarak': {'nilai': jarak, 'skor': skor_jarak, 'bobot': '10%', 'kontribusi': round(skor_jarak * bobot_jarak, 2)}
+    }
+    
     try:
-        biaya = int(request.form['biaya'])
-        fasilitas = int(request.form['fasilitas'])
-        jarak = int(request.form['jarak'])
-    except ValueError:
-        return render_template('index.html', error="Input biaya, fasilitas, dan jarak harus berupa angka.")
-
-    # Validate input
-    if biaya < 1 or biaya > 5 or fasilitas < 1 or fasilitas > 5 or jarak < 1 or jarak > 5:
-        return render_template('index.html', error="Input biaya, fasilitas, dan jarak harus antara 1 dan 5.")
-
-    if akreditasi not in ['A', 'B', 'C', 'D', 'E']:
-        return render_template('index.html', error="Akreditasi harus salah satu dari A, B, C, D, atau E.")
-
-    if lokasi not in ['Pusat Kota', 'Kecamatan', 'Pedesaan']:
-        return render_template('index.html', error="Lokasi tidak valid.")
-
-    # Calculate score and get calculation details
-    sekolah = Sekolah(nama, lokasi, akreditasi, biaya, fasilitas, jarak)
-    skor, detail_perhitungan = sekolah.hitung_skor()
-
-    # Save to search history
-    conn = get_db_connection()
-    if conn is not None:
-        try:
-            cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO search_history (univ_name, lokasi, akreditasi, biaya, fasilitas, jarak, skor)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ''', (nama, lokasi, akreditasi, biaya, fasilitas, jarak, skor))
-            conn.commit()
-        except mysql.connector.Error as err:
-            print(f"Error saat menyimpan riwayat: {err}")
-        finally:
-            cursor.close()
-            conn.close()
-
-    # Get recent search history
-    conn = get_db_connection()
-    history = []
-    if conn is not None:
-        try:
-            cursor = conn.cursor()
-            cursor.execute('''
-                SELECT univ_name, lokasi, akreditasi, biaya, fasilitas, jarak, skor
-                FROM search_history
-                ORDER BY search_time DESC
-                LIMIT 5
-            ''')
-            history = cursor.fetchall()
-        except mysql.connector.Error as err:
-            print(f"Error saat mengambil riwayat: {err}")
-        finally:
-            cursor.close()
-            conn.close()
-
-    # Prepare result data
-    result_data = {
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO history (sekolah_id, nama, lokasi, akreditasi, biaya, fasilitas, jarak, skor, search_time)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (sekolah_id, nama, lokasi, akreditasi, biaya, fasilitas, jarak, round(total_skor, 2), datetime.now()))
+        
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+    except mysql.connector.Error as err:
+        app.logger.error(f"Database error in rekomendasi: {err}")
+        return render_template('index.html', error=f"Database error: {err}")
+    except Exception as e:
+        app.logger.error(f"Unexpected error in rekomendasi: {e}")
+        return render_template('index.html', error=f"Unexpected error: {e}")
+    
+    return render_template('result.html', result={
         'nama': nama,
-        'skor': skor,
+        'skor': round(total_skor, 2),
         'detail': {
             'Lokasi': lokasi,
             'Akreditasi': akreditasi,
@@ -296,22 +269,12 @@ def rekomendasi():
             'Jarak': jarak
         },
         'detail_perhitungan': detail_perhitungan
-    }
-
-    # Prepare history data
-    history_data = [{
-        'nama': row[0],
-        'lokasi': row[1],
-        'akreditasi': row[2],
-        'biaya': row[3],
-        'fasilitas': row[4],
-        'jarak': row[5],
-        'skor': row[6]
-    } for row in history]
-
-    return render_template('result.html', result=result_data, history=history_data)
+    })
 
 if __name__ == '__main__':
-    init_db()
-    populate_universities()
-    app.run(debug=True)
+    try:
+        create_database()
+        populate_universities()
+        app.run(debug=True)
+    except Exception as e:
+        app.logger.error(f"Failed to start application: {e}")

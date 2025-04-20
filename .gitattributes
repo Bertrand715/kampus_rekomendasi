@@ -1,0 +1,21 @@
+# Atur semua file teks untuk menggunakan LF (Line Feed) secara konsisten
+* text=auto eol=lf
+
+# Pastikan file spesifik menggunakan LF
+*.html text eol=lf
+*.py text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.txt text eol=lf
+
+# Tandai file biner agar tidak diubah oleh Git
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+
+# Atur perilaku diff untuk file tertentu (opsional)
+*.py diff=python
+*.html diff=html

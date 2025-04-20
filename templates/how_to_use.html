@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How To Use - Rekomendasi Kampus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="{{ url_for('home') }}" class="nav-logo">Kampus Terbaik</a>
+        <nav class="nav">
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-list">
+                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('how_to_use') }}" class="nav-link active">How To Use</a></li>
+                <li><a href="{{ url_for('calculator') }}" class="nav-link">Calculator</a></li>
+                <li><a href="{{ url_for('history') }}" class="nav-link">History</a></li>
+                <li><a href="{{ url_for('about') }}" class="nav-link">About</a></li>
+                <li><a href="{{ url_for('index') }}" class="nav-link search-link"><i class="fas fa-search"></i> Search</a></li>
+                <li><button class="theme-toggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Floating Search Button -->
+    <a href="{{ url_for('index') }}" class="floating-button"><i class="fas fa-search"></i></a>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="content-container">
+            <h1>Cara Menggunakan Aplikasi</h1>
+            <section class="how-to-use">
+                <h2>Langkah-Langkah</h2>
+                <ol>
+                    <li><strong>Pilih Universitas</strong>: Buka halaman Search, masukkan nama universitas di kolom pencarian, dan pilih dari saran yang muncul.</li>
+                    <li><strong>Isi Kriteria</strong>: Pilih lokasi, akreditasi, dan masukkan nilai biaya, fasilitas, dan jarak (skala 1-5).</li>
+                    <li><strong>Dapatkan Rekomendasi</strong>: Klik "Cari Rekomendasi" untuk melihat skor dan detail perhitungan.</li>
+                    <li><strong>Lihat Riwayat</strong>: Buka halaman History untuk melihat semua pencarian sebelumnya.</li>
+                    <li><strong>Gunakan Kalkulator</strong>: Gunakan halaman Calculator untuk menghitung skor secara manual.</li>
+                </ol>
+                <h2>Tips</h2>
+                <ul>
+                    <li>Pastikan nilai biaya, fasilitas, dan jarak berada di rentang 1-5.</li>
+                    <li>Gunakan tom```html
+                    <li>Gunakan tombol tema di header untuk beralih ke mode gelap.</li>
+                    <li>Klik ikon pencarian di header atau tombol floating untuk kembali ke halaman pencarian.</li>
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Toggle mobile menu
+            $('.nav-toggle').on('click', function() {
+                $('.nav-list').toggleClass('active');
+            });
+
+            // Dark mode toggle
+            $('.theme-toggle').on('click', function() {
+                $('body').toggleClass('dark-mode');
+                const icon = $('.theme-toggle i');
+                icon.toggleClass('fa-moon fa-sun');
+                localStorage.setItem('theme', $('body').hasClass('dark-mode') ? 'dark' : 'light');
+            });
+
+            // Load theme from localStorage
+            if (localStorage.getItem('theme') === 'dark') {
+                $('body').addClass('dark-mode');
+                $('.theme-toggle i').removeClass('fa-moon').addClass('fa-sun');
+            }
+
+            // Hide loading animation on page load
+            $(window).on('load', function() {
+                setTimeout(() => {
+                    $('.loading-overlay').hide();
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>
