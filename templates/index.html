@@ -3,63 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekomendasi Kampus</title>
+    <title>Search - Rekomendasi Kampus</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
-        <a href="{{ url_for('home') }}" class="nav-logo">Kampus Terbaik</a>
         <nav class="nav">
             <button class="nav-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-list">
-                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
-                <li><a href="{{ url_for('how_to_use') }}" class="nav-link">How To Use</a></li>
-                <li><a href="{{ url_for('calculator') }}" class="nav-link">Calculator</a></li>
-                <li><a href="{{ url_for('history') }}" class="nav-link">History</a></li>
-                <li><a href="{{ url_for('about') }}" class="nav-link">About</a></li>
-                <li><a href="{{ url_for('index') }}" class="nav-link search-link active"><i class="fas fa-search"></i> Search</a></li>
+                <li><a href="{{ url_for('home') }}" class="nav-link {{ 'active' if request.endpoint == 'home' }}">Kampus Terbaik</a></li>
+                <li><a href="{{ url_for('how_to_use') }}" class="nav-link {{ 'active' if request.endpoint == 'how_to_use' }}">How To Use</a></li>
+                <li><a href="{{ url_for('calculator') }}" class="nav-link {{ 'active' if request.endpoint == 'calculator' }}">Calculator</a></li>
+                <li><a href="{{ url_for('history') }}" class="nav-link {{ 'active' if request.endpoint == 'history' }}">History</a></li>
+                <li><a href="{{ url_for('about') }}" class="nav-link {{ 'active' if request.endpoint == 'about' }}">About</a></li>
+                <li><a href="{{ url_for('index') }}" class="nav-link search-link {{ 'active' if request.endpoint == 'index' }}"><i class="fas fa-search"></i> Search</a></li>
                 <li><button class="theme-toggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button></li>
             </ul>
         </nav>
     </header>
 
+    <!-- Floating Search Button -->
+    <a href="{{ url_for('index') }}" class="floating-button active"><i class="fas fa-search"></i></a>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
     <!-- Main Content -->
     <div class="container">
-        <h1>Pemilihan Kampus Terbaik</h1>
-
-        <!-- Pesan Error -->
+        <h1>Cari Rekomendasi Kampus</h1>
         {% if error %}
         <div class="error-message">
             <p>{{ error }}</p>
         </div>
         {% endif %}
+        <form action="{{ url_for('rekomendasi') }}" method="POST" class="search-form">
+            <label for="sekolah">Nama Universitas:</label>
+            <input type="text" id="sekolah" name="nama" placeholder="Ketik nama universitas..." required>
+            <input type="hidden" id="sekolah_id" name="sekolah_id">
+            <div class="suggestions-container" id="suggestions"></div>
 
-        <!-- Form Input -->
-        <form action="/rekomendasi" method="POST">
-            <div class="search-container">
-                <label for="nama">Nama Universitas:</label>
-                <div class="search-box-wrapper">
-                    <input type="text" id="nama" name="nama" class="search-box" placeholder="Cari universitas..." required>
-                    <input type="hidden" id="sekolah_id" name="sekolah_id">
-                    <button type="button" class="clear-search" style="display: none;">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div id="suggestions" class="suggestions-container"></div>
-            </div>
-
-            <label for="lokasi">Lokasi: <span class="tooltip">Pusat Kota (5), Kecamatan (4), Pedesaan (3)</span></label>
+            <label for="lokasi">Lokasi:</label>
             <select id="lokasi" name="lokasi" required>
                 <option value="Pusat Kota">Pusat Kota</option>
                 <option value="Kecamatan">Kecamatan</option>
                 <option value="Pedesaan">Pedesaan</option>
             </select>
 
-            <label for="akreditasi">Akreditasi: <span class="tooltip">A (5), B (4), C (3), D (2), E (1)</span></label>
+            <label for="akreditasi">Akreditasi:</label>
             <select id="akreditasi" name="akreditasi" required>
                 <option value="A">A</option>
                 <option value="B">B</option>
@@ -83,97 +79,77 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Autocomplete Search
         $(document).ready(function() {
-            const input = $('#nama');
-            const sekolahId = $('#sekolah_id');
-            const suggestions = $('#suggestions');
-            const clearBtn = $('.clear-search');
-            
-            function highlightMatch(text, query) {
-                if (!query) return text;
-                const regex = new RegExp(`(${query})`, 'gi');
-                return text.replace(regex, '<span class="highlight">$1</span>');
-            }
-            
-            input.on('input', function() {
-                clearBtn.toggle(!!$(this).val());
-                searchKampus();
+            // Toggle mobile menu
+            $('.nav-toggle').on('click', function() {
+                $('.nav-list').toggleClass('active');
             });
-            
-            function searchKampus() {
-                const query = input.val().trim();
+
+            // Dark mode toggle
+            $('.theme-toggle').on('click', function() {
+                $('body').toggleClass('dark-mode');
+                const icon = $('.theme-toggle i');
+                icon.toggleClass('fa-moon fa-sun');
+                localStorage.setItem('theme', $('body').hasClass('dark-mode') ? 'dark' : 'light');
+            });
+
+            // Load theme from localStorage
+            if (localStorage.getItem('theme') === 'dark') {
+                $('body').addClass('dark-mode');
+                $('.theme-toggle i').removeClass('fa-moon').addClass('fa-sun');
+            }
+
+            // Autocomplete search
+            $('#sekolah').on('input', function() {
+                const query = $(this).val();
                 if (query.length < 2) {
-                    suggestions.empty().hide();
+                    $('#suggestions').empty().hide();
                     return;
                 }
-                
-                $.get('/cari-sekolah', { q: query }, function(data) {
+
+                $.get('{{ url_for("cari_sekolah") }}', { q: query }, function(data) {
+                    const suggestions = $('#suggestions');
                     suggestions.empty();
-                    if (data.error) {
-                        suggestions.append(`<div class="suggestion-item error">${data.error}</div>`);
-                        suggestions.show();
+
+                    if (data.length === 0) {
+                        suggestions.hide();
                         return;
                     }
-                    if (data.length > 0) {
-                        data.forEach(item => {
-                            suggestions.append(
-                                `<div class="suggestion-item" data-id="${item.id}">
-                                    ${highlightMatch(item.text, query)}
-                                </div>`
-                            );
-                        });
-                        suggestions.show();
-                    } else {
-                        suggestions.hide();
-                    }
+
+                    data.forEach(item => {
+                        const suggestionItem = $('<div>')
+                            .addClass('suggestion-item')
+                            .text(item.text)
+                            .on('click', function() {
+                                $('#sekolah').val(item.text);
+                                $('#sekolah_id').val(item.id);
+                                suggestions.empty().hide();
+                            });
+                        suggestions.append(suggestionItem);
+                    });
+
+                    suggestions.show();
+                }).fail(function(xhr) {
+                    const error = xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error';
+                    $('#suggestions').empty().hide();
+                    alert('Error fetching suggestions: ' + error);
                 });
-            }
-            
-            $(document).on('click', '.suggestion-item', function() {
-                const id = $(this).data('id');
-                const text = $(this).find('span.highlight').length 
-                    ? $(this).text().replace(/\s+/g, ' ').trim() 
-                    : $(this).text().trim();
-                
-                input.val(text);
-                sekolahId.val(id);
-                suggestions.empty().hide();
             });
-            
-            clearBtn.on('click', function() {
-                input.val('').focus();
-                sekolahId.val('');
-                $(this).hide();
-                suggestions.empty().hide();
-            });
-            
+
+            // Hide suggestions when clicking outside
             $(document).on('click', function(e) {
-                if (!$(e.target).closest('.search-box-wrapper, .suggestions-container').length) {
-                    suggestions.hide();
+                if (!$(e.target).closest('#sekolah, #suggestions').length) {
+                    $('#suggestions').empty().hide();
                 }
             });
-        });
 
-        // Toggle mobile menu
-        document.querySelector('.nav-toggle').addEventListener('click', () => {
-            document.querySelector('.nav-list').classList.toggle('active');
+            // Hide loading animation on page load
+            $(window).on('load', function() {
+                setTimeout(() => {
+                    $('.loading-overlay').hide();
+                }, 500);
+            });
         });
-
-        // Dark mode toggle
-        document.querySelector('.theme-toggle').addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const icon = document.querySelector('.theme-toggle i');
-            icon.classList.toggle('fa-moon');
-            icon.classList.toggle('fa-sun');
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-        });
-
-        // Load theme from localStorage
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-            document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
-        }
     </script>
 </body>
 </html>

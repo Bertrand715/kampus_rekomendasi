@@ -10,18 +10,17 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <a href="{{ url_for('home') }}" class="nav-logo">Kampus Terbaik</a>
         <nav class="nav">
             <button class="nav-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-list">
-                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
-                <li><a href="{{ url_for('how_to_use') }}" class="nav-link active">How To Use</a></li>
-                <li><a href="{{ url_for('calculator') }}" class="nav-link">Calculator</a></li>
-                <li><a href="{{ url_for('history') }}" class="nav-link">History</a></li>
-                <li><a href="{{ url_for('about') }}" class="nav-link">About</a></li>
-                <li><a href="{{ url_for('index') }}" class="nav-link search-link"><i class="fas fa-search"></i> Search</a></li>
+                <li><a href="{{ url_for('home') }}" class="nav-link {{ 'active' if request.endpoint == 'home' }}">Kampus Terbaik</a></li>
+                <li><a href="{{ url_for('how_to_use') }}" class="nav-link {{ 'active' if request.endpoint == 'how_to_use' }}">How To Use</a></li>
+                <li><a href="{{ url_for('calculator') }}" class="nav-link {{ 'active' if request.endpoint == 'calculator' }}">Calculator</a></li>
+                <li><a href="{{ url_for('history') }}" class="nav-link {{ 'active' if request.endpoint == 'history' }}">History</a></li>
+                <li><a href="{{ url_for('about') }}" class="nav-link {{ 'active' if request.endpoint == 'about' }}">About</a></li>
+                <li><a href="{{ url_for('index') }}" class="nav-link search-link {{ 'active' if request.endpoint == 'index' }}"><i class="fas fa-search"></i> Search</a></li>
                 <li><button class="theme-toggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button></li>
             </ul>
         </nav>
@@ -45,13 +44,23 @@
                     <li><strong>Pilih Universitas</strong>: Buka halaman Search, masukkan nama universitas di kolom pencarian, dan pilih dari saran yang muncul.</li>
                     <li><strong>Isi Kriteria</strong>: Pilih lokasi, akreditasi, dan masukkan nilai biaya, fasilitas, dan jarak (skala 1-5).</li>
                     <li><strong>Dapatkan Rekomendasi</strong>: Klik "Cari Rekomendasi" untuk melihat skor dan detail perhitungan.</li>
-                    <li><strong>Lihat Riwayat</strong>: Buka halaman History untuk melihat semua pencarian sebelumnya.</li>
+                    <li><strong>Lihat Riwayat</strong>: Buka halaman History untuk melihat semua pencarian sebelumnya dan status rekomendasi (Direkomendasikan jika skor ≥ 3.5).</li>
                     <li><strong>Gunakan Kalkulator</strong>: Gunakan halaman Calculator untuk menghitung skor secara manual.</li>
                 </ol>
+                <h3>Kriteria Penilaian</h3>
+                <ul>
+                    <li><strong>Akreditasi:</strong> A (5), B (4), C (3), D (2), E (1)</li>
+                    <li><strong>Biaya (1-5):</strong> 1 = sangat murah, 5 = sangat mahal</li>
+                    <li><strong>Fasilitas (1-5):</strong> 1 = minim, 5 = sangat lengkap</li>
+                    <li><strong>Lokasi:</strong> Pusat Kota (5), Kecamatan (4), Pedesaan (3)</li>
+                    <li><strong>Jarak (1-5):</strong> 1 = sangat dekat, 5 = sangat jauh</li>
+                </ul>
+                <p>
+                    Skor dihitung berdasarkan bobot: Akreditasi (30%), Biaya (25%), Fasilitas (20%), Lokasi (15%), Jarak (10%). Kampus dengan skor ≥ 3.5 dianggap direkomendasikan.
+                </p>
                 <h2>Tips</h2>
                 <ul>
                     <li>Pastikan nilai biaya, fasilitas, dan jarak berada di rentang 1-5.</li>
-                    <li>Gunakan tom```html
                     <li>Gunakan tombol tema di header untuk beralih ke mode gelap.</li>
                     <li>Klik ikon pencarian di header atau tombol floating untuk kembali ke halaman pencarian.</li>
                 </ul>

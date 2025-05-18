@@ -10,18 +10,17 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <a href="{{ url_for('home') }}" class="nav-logo">Kampus Terbaik</a>
         <nav class="nav">
             <button class="nav-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-list">
-                <li><a href="{{ url_for('home') }}" class="nav-link">Home</a></li>
-                <li><a href="{{ url_for('how_to_use') }}" class="nav-link">How To Use</a></li>
-                <li><a href="{{ url_for('calculator') }}" class="nav-link">Calculator</a></li>
-                <li><a href="{{ url_for('history') }}" class="nav-link">History</a></li>
-                <li><a href="{{ url_for('about') }}" class="nav-link active">About</a></li>
-                <li><a href="{{ url_for('index') }}" class="nav-link search-link"><i class="fas fa-search"></i> Search</a></li>
+                <li><a href="{{ url_for('home') }}" class="nav-link {{ 'active' if request.endpoint == 'home' }}">Kampus Terbaik</a></li>
+                <li><a href="{{ url_for('how_to_use') }}" class="nav-link {{ 'active' if request.endpoint == 'how_to_use' }}">How To Use</a></li>
+                <li><a href="{{ url_for('calculator') }}" class="nav-link {{ 'active' if request.endpoint == 'calculator' }}">Calculator</a></li>
+                <li><a href="{{ url_for('history') }}" class="nav-link {{ 'active' if request.endpoint == 'history' }}">History</a></li>
+                <li><a href="{{ url_for('about') }}" class="nav-link {{ 'active' if request.endpoint == 'about' }}">About</a></li>
+                <li><a href="{{ url_for('index') }}" class="nav-link search-link {{ 'active' if request.endpoint == 'index' }}"><i class="fas fa-search"></i> Search</a></li>
                 <li><button class="theme-toggle" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button></li>
             </ul>
         </nav>
@@ -37,56 +36,79 @@
 
     <!-- Main Content -->
     <div class="container">
-        <h1>Tentang Kami</h1>
         <div class="content-container">
-            <h2>Pengenalan Tim</h2>
-            <p>
-                Kami adalah tim pengembang dari Universitas Indonesia yang berdedikasi untuk menciptakan solusi teknologi yang mempermudah proses pengambilan keputusan pendidikan. Website "Pemilihan Kampus Terbaik" adalah proyek kami untuk membantu calon mahasiswa menemukan universitas yang sesuai dengan kebutuhan mereka.
-            </p>
-            <p>
-                Dengan latar belakang di bidang teknologi informasi dan pendidikan, kami menggabungkan keahlian dalam pengembangan web dan analisis data untuk menghadirkan platform yang user-friendly dan informatif.
-            </p>
-
-            <h2>Kontak Kami</h2>
-            <ul class="contact-list">
-                <li><i class="fas fa-envelope"></i> <strong>Email:</strong> <a href="mailto:support@kampusterbaik.com">support@kampusterbaik.com</a></li>
-                <li><i class="fab fa-whatsapp"></i> <strong>WhatsApp:</strong> <a href="https://wa.me/6281234567890" target="_blank">+62 812-3456-7890</a></li>
-                <li><i class="fab fa-instagram"></i> <strong>Instagram:</strong> <a href="https://instagram.com/kampusterbaik" target="_blank">@kampusterbaik</a></li>
-                <li><i class="fab fa-github"></i> <strong>GitHub:</strong> <a href="https://github.com/kampusterbaik" target="_blank">github.com/kampusterbaik</a></li>
-            </ul>
-            <p>
-                Kami sangat menghargai masukan dan saran Anda untuk meningkatkan platform ini. Silakan hubungi kami melalui salah satu kanal di atas!
-            </p>
+            <h1>Tentang Kami</h1>
+            <section class="about">
+                <h2>Siapa Kami</h2>
+                <p>
+                    Kami adalah tim pengembang yang berdedikasi untuk membantu calon mahasiswa menemukan universitas terbaik di Indonesia. Dengan menggunakan teknologi dan data, kami menciptakan platform "Pemilihan Kampus Terbaik" untuk memberikan rekomendasi yang personal dan objektif.
+                </p>
+                <h2>Misi Kami</h2>
+                <p>
+                    Misi kami adalah mempermudah proses pengambilan keputusan dalam memilih universitas. Kami menggabungkan berbagai kriteria seperti lokasi, akreditasi, biaya, fasilitas, dan jarak untuk memberikan skor yang dapat dipercaya, sehingga pengguna dapat membuat keputusan yang lebih baik.
+                </p>
+                <h2>Hubungi Kami</h2>
+                <p>
+                    Jika Anda memiliki pertanyaan atau saran, silakan hubungi anggota tim kami di bawah ini:
+                </p>
+                <div class="team-members">
+                    <div class="team-member">
+                        <h3>Backend: Bertrand Zega</h3>
+                        <ul class="contact-links">
+                            <li><i class="fas fa-envelope"></i> <a href="mailto:bertrand4@gmail.com">bertrand4@gmail.com</a></li>
+                            <li><i class="fab fa-instagram"></i> <a href="https://www.instagram.com/bertrand_zega" target="_blank">bertrand_zega</a></li>
+                            <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/6285338302565" target="_blank">085338302565</a></li>
+                        </ul>
+                    </div>
+                    <div class="team-member">
+                        <h3>Frontend: Hendriko Pakpahan</h3>
+                        <ul class="contact-links">
+                            <li><i class="fas fa-envelope"></i> <a href="mailto:endriko.pakpahan15@gmail.com">endriko.pakpahan15@gmail.com</a></li>
+                            <li><i class="fab fa-instagram"></i> <a href="https://www.instagram.com/hendrikopakpahan" target="_blank">hendrikopakpahan</a></li>
+                            <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/6281526069734" target="_blank">081526069734</a></li>
+                        </ul>
+                    </div>
+                    <div class="team-member">
+                        <h3>UI/UX: Meilani Ngantung</h3>
+                        <ul class="contact-links">
+                            <li><i class="fas fa-envelope"></i> <a href="mailto:meilaningantung09@gmail.com">meilaningantung09@gmail.com</a></li>
+                            <li><i class="fab fa-instagram"></i> <a href="https://www.instagram.com/meilaningantung_" target="_blank">meilaningantung_</a></li>
+                            <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/62895806311879" target="_blank">0895806311879</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Toggle mobile menu
-        document.querySelector('.nav-toggle').addEventListener('click', () => {
-            document.querySelector('.nav-list').classList.toggle('active');
-        });
+        $(document).ready(function() {
+            // Toggle mobile menu
+            $('.nav-toggle').on('click', function() {
+                $('.nav-list').toggleClass('active');
+            });
 
-        // Dark mode toggle
-        document.querySelector('.theme-toggle').addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const icon = document.querySelector('.theme-toggle i');
-            icon.classList.toggle('fa-moon');
-            icon.classList.toggle('fa-sun');
-            localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-        });
+            // Dark mode toggle
+            $('.theme-toggle').on('click', function() {
+                $('body').toggleClass('dark-mode');
+                const icon = $('.theme-toggle i');
+                icon.toggleClass('fa-moon fa-sun');
+                localStorage.setItem('theme', $('body').hasClass('dark-mode') ? 'dark' : 'light');
+            });
 
-        // Load theme from localStorage
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-mode');
-            document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
-        }
+            // Load theme from localStorage
+            if (localStorage.getItem('theme') === 'dark') {
+                $('body').addClass('dark-mode');
+                $('.theme-toggle i').removeClass('fa-moon').addClass('fa-sun');
+            }
 
-        // Show loading animation
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                document.querySelector('.loading-overlay').style.display = 'none';
-            }, 500);
+            // Hide loading animation on page load
+            $(window).on('load', function() {
+                setTimeout(() => {
+                    $('.loading-overlay').hide();
+                }, 500);
+            });
         });
     </script>
 </body>

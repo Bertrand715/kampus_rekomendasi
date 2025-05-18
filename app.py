@@ -122,7 +122,7 @@ def calculator():
 def history():
     app.logger.debug("Rendering history page")
     page = request.args.get('page', 1, type=int)
-    items_per_page = 5
+    items_per_page = 3  # Ubah dari 5 menjadi 3
     
     try:
         conn = get_db_connection()
@@ -134,8 +134,10 @@ def history():
         
         offset = (page - 1) * items_per_page
         cursor.execute('''
-            SELECT * FROM history 
-            ORDER BY search_time DESC 
+            SELECT h.*, u.univ_name 
+            FROM history h
+            JOIN universities u ON h.sekolah_id = u.id
+            ORDER BY h.search_time DESC 
             LIMIT %s OFFSET %s
         ''', (items_per_page, offset))
         history = cursor.fetchall()
@@ -153,6 +155,7 @@ def history():
     except Exception as e:
         app.logger.error(f"Unexpected error in history: {e}")
         return render_template('history.html', error=f"Unexpected error: {e}")
+
 @app.route('/about')
 def about():
     app.logger.debug("Rendering about page")
