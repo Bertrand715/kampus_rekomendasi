@@ -19,3 +19,7 @@
 # Atur perilaku diff untuk file tertentu (opsional)
 *.py diff=python
 *.html diff=html
+* text=auto
+*.py text eol=lf
+*.css text eol=lf
+*.html text eol=lf
